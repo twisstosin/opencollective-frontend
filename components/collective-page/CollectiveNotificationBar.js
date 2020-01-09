@@ -129,14 +129,17 @@ const getNotification = (intl, status, collective, host, LoggedInUser) => {
  * Adds a notification bar for the collective.
  */
 const CollectiveNotificationBar = ({ intl, status, collective, host, LoggedInUser }) => {
-  const notification = getNotification(intl, status, collective, host, LoggedInUser);
+  const notification = getNotification(intl, status, collective, host);
 
   return !notification ? null : (
     <NotificationBar
-      status={notification.status}
+      status={status}
+      host={host}
+      collective={collective}
       title={notification.title}
       description={notification.description}
       actions={notification.actions}
+      LoggedInUser={LoggedInUser}
     />
   );
 };

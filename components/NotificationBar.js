@@ -1,8 +1,18 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
+import styled from 'styled-components';
+
+import AcceptRejectButtons from './host-dashboard/AcceptRejectButtons';
 
 const logo = '/static/images/opencollective-icon.svg';
+
+const AcceptRejectBanner = styled.div`
+  display: flex;
+  font-size: 1em;
+  width: 300px;
+  align-items: center;
+`;
 
 class NotificationBar extends React.Component {
   static propTypes = {
@@ -11,11 +21,33 @@ class NotificationBar extends React.Component {
     description: PropTypes.string,
     error: PropTypes.string,
     actions: PropTypes.arrayOf(PropTypes.node),
+    /** Collective */
+    collective: PropTypes.shape({
+      id: PropTypes.number,
+      slug: PropTypes.string,
+    }),
+    /** Host */
+    host: PropTypes.shape({
+      slug: PropTypes.string,
+    }),
+    LoggedInUser: PropTypes.shape({
+      roles: PropTypes.arrayOf(PropTypes.node),
+      isHostAdmin: PropTypes.bool.isRequired,
+    }),
   };
 
-  render() {
-    const { status, error, title, description, actions } = this.props;
+  constructor(props) {
+    super(props);
+    this.state = {
+      showRejectionModal: false,
+      collectiveId: null,
+    };
+  }
 
+  render() {
+    const { status, error, title, description, actions, collective, LoggedInUser, host } = this.props;
+
+    const isHostAdmin = LoggedInUser && LoggedInUser.isHostAdmin(collective);
     return (
       <div className={classNames(status, 'NotificationBar')}>
         <style jsx>
@@ -117,6 +149,12 @@ class NotificationBar extends React.Component {
           <div className={`NotificationLine ${status}`}>
             <h1>{title}</h1>
             <p className="description">{description}</p>
+
+            {isHostAdmin && (
+              <AcceptRejectBanner>
+                <AcceptRejectButtons collective={collective} host={host} />
+              </AcceptRejectBanner>
+            )}
             {actions && (
               <div className="actions">
                 {actions.map(action => (

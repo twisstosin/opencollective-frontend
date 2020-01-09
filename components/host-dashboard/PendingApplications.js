@@ -1,10 +1,8 @@
-import React, { Fragment } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
-import { Mutation } from '@apollo/react-components';
 import { graphql } from '@apollo/react-hoc';
 import { Check } from '@styled-icons/boxicons-regular/Check';
 import { Github } from '@styled-icons/fa-brands/Github';
-import gql from 'graphql-tag';
 import { get } from 'lodash';
 import { FormattedMessage } from 'react-intl';
 
@@ -17,23 +15,13 @@ import { Box, Flex } from '../Grid';
 import LinkCollective from '../LinkCollective';
 import Loading from '../Loading';
 import MessageBox from '../MessageBox';
-import StyledButton from '../StyledButton';
 import StyledCard from '../StyledCard';
 import StyledHr from '../StyledHr';
 import StyledLink from '../StyledLink';
 import { Span } from '../Text';
 import { withUser } from '../UserProvider';
 
-import AppRejectionReasonModal from './AppRejectionReasonModal';
-
-const ApproveCollectiveMutation = gql`
-  mutation approveCollective($id: Int!) {
-    approveCollective(id: $id) {
-      id
-      isActive
-    }
-  }
-`;
+import AcceptRejectButtons from './AcceptRejectButtons';
 
 class HostPendingApplications extends React.Component {
   static propTypes = {
@@ -151,43 +139,11 @@ class HostPendingApplications extends React.Component {
                   <Check size={39} />
                 </Box>
               ) : (
-                <Fragment>
-                  <Mutation mutation={ApproveCollectiveMutation}>
-                    {(approveCollective, { loading }) => (
-                      <StyledButton
-                        m={1}
-                        loading={loading}
-                        onClick={() => approveCollective({ variables: { id: c.id } })}
-                        data-cy={`${c.slug}-approve`}
-                        buttonStyle="success"
-                        minWidth={125}
-                      >
-                        <FormattedMessage id="actions.approve" defaultMessage="Approve" />
-                      </StyledButton>
-                    )}
-                  </Mutation>
-                  <StyledButton
-                    buttonStyle="danger"
-                    minWidth={125}
-                    m={1}
-                    onClick={() => this.setState({ showRejectionModal: true, collectiveId: c.id })}
-                  >
-                    <FormattedMessage id="actions.reject" defaultMessage="Reject" />
-                  </StyledButton>
-                </Fragment>
+                <AcceptRejectButtons collective={c} host={this.props.hostCollectiveSlug} />
               )}
             </Flex>
           </StyledCard>
         ))}
-
-        {this.state.showRejectionModal && (
-          <AppRejectionReasonModal
-            show={this.state.showRejectionModal}
-            onClose={() => this.setState({ showRejectionModal: false })}
-            collectiveId={this.state.collectiveId}
-            hostCollectiveSlug={this.props.hostCollectiveSlug}
-          />
-        )}
       </Container>
     );
   }
