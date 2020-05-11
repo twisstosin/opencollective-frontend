@@ -2,8 +2,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { useMutation } from '@apollo/react-hooks';
 import { X } from '@styled-icons/feather/X';
+import { InsertEmoticon } from '@styled-icons/material';
 import { Edit } from '@styled-icons/material/Edit';
 import themeGet from '@styled-system/theme-get';
+import { Button, OverlayTrigger, Popover, Row } from 'react-bootstrap';
 import { FormattedMessage } from 'react-intl';
 import { usePopper } from 'react-popper';
 import styled from 'styled-components';
@@ -23,9 +25,22 @@ import MessageBox from '../MessageBox';
 import RichTextEditor from '../RichTextEditor';
 import StyledButton from '../StyledButton';
 import StyledHr from '../StyledHr';
+import StyledLink from '../StyledLink';
 import { P } from '../Text';
 
 import { CommentFieldsFragment } from './graphql';
+
+const EmojiButton = styled(Button)`
+  text-decoration: none;
+
+  &:focus,
+  &:hover,
+  &:visited,
+  &:link,
+  &:active {
+    text-decoration: none;
+  }
+`;
 
 const CommentBtn = styled(StyledButton)`
   padding: 3px 5px;
@@ -87,6 +102,14 @@ const editCommentMutation = gqlV2`
     }
   }
   ${CommentFieldsFragment}
+`;
+
+const createCommentReactionMutation = gqlV2`
+  mutation CreateCommentReaction($commentReaction: CommentReactionCreateInput!) {
+    addCommentReaction(commentReaction: $commentReaction) {
+      id
+    }
+  }
 `;
 
 const mutationOptions = { context: API_V2_CONTEXT };
@@ -167,8 +190,19 @@ const useClosePopper = (popperState, closePopper) => {
  *
  * /!\ Can only be used with data from API V2.
  */
-const Comment = ({ comment, canEdit, canDelete, withoutActions, maxCommentHeight, isConversationRoot, onDelete }) => {
+const Comment = ({
+  comment,
+  canEdit,
+  canDelete,
+  withoutActions,
+  maxCommentHeight,
+  isConversationRoot,
+  onDelete,
+  reactions,
+}) => {
   const [isEditing, setEditing] = React.useState(false);
+  const [selectedReactions, setSelectedReactions] = React.useState(reactions);
+  const [createCommentReaction] = useMutation(createCommentReactionMutation, mutationOptions);
   const [isDeleting, setDeleting] = React.useState(null);
   const [showAdminActions, setShowAdminActions] = React.useState(false);
   const [refElement, setRefElement] = React.useState(null);
@@ -180,6 +214,8 @@ const Comment = ({ comment, canEdit, canDelete, withoutActions, maxCommentHeight
     }
   };
   const hasActions = !withoutActions && !isEditing && (canEdit || canDelete);
+  const emojiFirstRow = ['👍️', '👎', '😀', '🎉'];
+  const emojiSecondRow = ['😕', '️❤', '🚀', '👀'];
 
   const [deleteComment, { error: deleteError }] = useMutation(deleteCommentMutation, mutationOptions);
   const { styles, attributes, state } = usePopper(refElement, popperElement, {
@@ -187,6 +223,46 @@ const Comment = ({ comment, canEdit, canDelete, withoutActions, maxCommentHeight
     modifiers: REACT_POPPER_MODIFIERS,
   });
   useClosePopper(state, closePopup);
+
+  const handleEmojiSelect = async emoji => {
+    const commentReaction = {
+      emoji: emoji,
+      comment: { id: comment.id },
+      fromCollectiveId: { id: comment.fromCollective.id },
+    };
+    const response = await createCommentReaction({ variables: { commentReaction } });
+    if (response.data) {
+      const updatedEmojiCount = {};
+      updatedEmojiCount[emoji] = selectedReactions[emoji] ? selectedReactions[emoji] + 1 : 1;
+      setSelectedReactions({ ...selectedReactions, ...updatedEmojiCount });
+    }
+  };
+
+  const popover = (
+    <Popover id="reaction-popover">
+      <div className="popover-title">Pick your reaction</div>
+      <div className="popover-content">
+        <Row>
+          {emojiFirstRow.map(emoji => {
+            return (
+              <EmojiButton key={emoji} bsStyle="link" onClick={() => handleEmojiSelect(emoji)}>
+                {emoji}
+              </EmojiButton>
+            );
+          })}
+        </Row>
+        <Row>
+          {emojiSecondRow.map(emoji => {
+            return (
+              <EmojiButton key={emoji} bsStyle="link" onClick={() => handleEmojiSelect(emoji)}>
+                {emoji}
+              </EmojiButton>
+            );
+          })}
+        </Row>
+      </div>
+    </Popover>
+  );
 
   return (
     <Container width="100%" data-cy="comment">
@@ -314,6 +390,34 @@ const Comment = ({ comment, canEdit, canDelete, withoutActions, maxCommentHeight
             )
           }
         </InlineEditField>
+        {Object.entries(selectedReactions).map(([emoji, count]) => {
+          return (
+            <StyledLink
+              key={emoji}
+              disabled
+              buttonStyle="standard"
+              buttonSize="tiny"
+              display="inline-block"
+              mt={3}
+              mr={2}
+              whiteSpace="nowrap"
+            >
+              {`${emoji} ${count}`}
+            </StyledLink>
+          );
+        })}
+        <OverlayTrigger rootClose trigger="click" placement="bottom" overlay={popover}>
+          <StyledLink
+            textAlign="center"
+            buttonStyle="standard"
+            buttonSize="tiny"
+            display="inline-block"
+            mt={3}
+            whiteSpace="nowrap"
+          >
+            <InsertEmoticon size="1.2em"></InsertEmoticon>
+          </StyledLink>
+        </OverlayTrigger>
       </Box>
     </Container>
   );
@@ -325,9 +429,12 @@ Comment.propTypes = {
     html: PropTypes.string,
     createdAt: PropTypes.string,
     fromCollective: PropTypes.shape({
+      id: PropTypes.string,
       name: PropTypes.string,
     }),
   }).isRequired,
+  /** Reactions associated with this comment? */
+  reactions: PropTypes.object,
   /** Can current user edit this comment? */
   canEdit: PropTypes.bool,
   /** Can current user delete this comment? */
