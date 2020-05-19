@@ -20,7 +20,7 @@ import { H2, P } from '../components/Text';
 import { withUser } from '../components/UserProvider';
 
 const recurringContributionsPageQuery = gqlV2/* GraphQL */ `
-  query RecurringContributions($collectiveSlug: String) {
+  query RecurringContributionsPage($collectiveSlug: String) {
     account(slug: $collectiveSlug) {
       id
       slug
