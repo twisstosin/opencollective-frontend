@@ -5,7 +5,7 @@ import { get } from 'lodash';
 import dynamic from 'next/dynamic';
 import { createGlobalStyle } from 'styled-components';
 
-import { generateNotFoundError } from '../lib/errors';
+import with404Error from '../lib/with404Error';
 
 import CollectivePage from '../components/collective-page';
 import CollectiveNotificationBar from '../components/collective-page/CollectiveNotificationBar';
@@ -130,14 +130,12 @@ class NewCollectivePage extends React.Component {
   };
 
   render() {
-    const { slug, data, LoggedInUser, status, step, mode } = this.props;
+    const { data, LoggedInUser, status, step, mode } = this.props;
     const { showOnboardingModal } = this.state;
 
     if (!data.loading) {
       if (!data || data.error) {
         return <ErrorPage data={data} />;
-      } else if (!data.Collective) {
-        return <ErrorPage error={generateNotFoundError(slug, true)} log={false} />;
       } else if (data.Collective.isPledged && !data.Collective.isActive) {
         return <PledgedCollectivePage collective={data.Collective} />;
       } else if (data.Collective.isIncognito) {
@@ -218,4 +216,9 @@ const getCollective = graphql(getCollectivePageQuery, {
   }),
 });
 
-export default withUser(getCollective(NewCollectivePage));
+const notFoundHandler = with404Error(props => ({
+  isNotFound: !props.loading && !props.data?.Collective,
+  searchTerm: props.slug,
+}));
+
+export default withUser(getCollective(notFoundHandler(NewCollectivePage)));
