@@ -1,5 +1,5 @@
 # source: http://localhost:3060/graphql/v2
-# timestamp: Thu Jun 04 2020 13:23:07 GMT+0100 (British Summer Time)
+# timestamp: Tue Jun 09 2020 11:30:54 GMT+0200 (Central European Summer Time)
 
 """
 Account interface shared by all kind of accounts (Bot, Collective, Event, User, Organization)
@@ -592,6 +592,7 @@ input CollectiveCreateInput {
   description: String!
   tags: [String]
   githubHandle: String
+  settings: JSON
 }
 
 """
