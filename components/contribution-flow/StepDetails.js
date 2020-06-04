@@ -11,7 +11,7 @@ import { Router } from '../../server/pages';
 
 import Container from '../Container';
 import Currency from '../Currency';
-import FormattedMoneyAmount from '../FormattedMoneyAmount';
+import { formatCurrency } from '../../lib/currency-utils';
 import { Flex } from '../Grid';
 import StyledButton from '../StyledButton';
 import StyledButtonSet from '../StyledButtonSet';
@@ -38,10 +38,7 @@ const FrequenciesI18n = defineMessages({
 });
 
 const MinAmount = styled(Span)`
-  &:before {
-    content: 'Minimum Amount: ';
-    margin-left: -90px;
-  }
+  margin-left: -70px;
 `;
 
 const getOption = (intl, interval) => {
@@ -188,8 +185,8 @@ const StepDetails = ({
               />
             )}
           </StyledInputField>
-          <MinAmount fontSize="SmallCaption" fontWeight="bold" color="black.600">
-            <FormattedMoneyAmount amount={minAmount} currency={currency} interval={interval} />
+          <MinAmount fontSize="Caption" color="black.500">
+            Minimum amount: {formatCurrency(minAmount, currency)} {currency}
           </MinAmount>
         </Container>
         {showQuantity && (
