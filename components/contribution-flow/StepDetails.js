@@ -5,13 +5,12 @@ import memoizeOne from 'memoize-one';
 import { defineMessages, FormattedDate, FormattedMessage, injectIntl } from 'react-intl';
 import styled from 'styled-components';
 
-import { getPrecisionFromAmount } from '../../lib/currency-utils';
+import { formatCurrency, getPrecisionFromAmount } from '../../lib/currency-utils';
 import { getNextChargeDate } from '../../lib/date-utils';
 import { Router } from '../../server/pages';
 
 import Container from '../Container';
 import Currency from '../Currency';
-import { formatCurrency } from '../../lib/currency-utils';
 import { Flex } from '../Grid';
 import StyledButton from '../StyledButton';
 import StyledButtonSet from '../StyledButtonSet';
@@ -186,7 +185,11 @@ const StepDetails = ({
             )}
           </StyledInputField>
           <MinAmount fontSize="Caption" color="black.500">
-            Minimum amount: {formatCurrency(minAmount, currency)} {currency}
+            <FormattedMessage
+              id="contribuion.minimumAmount"
+              values={{ minAmount: formatCurrency(minAmount, currency), currency: currency }}
+              defaultMessage={'Minimum amount: {minAmount} {currency}'}
+            />
           </MinAmount>
         </Container>
         {showQuantity && (
