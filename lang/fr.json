@@ -1240,6 +1240,7 @@
   "redeemed.success": "Carte Cadeau validée !",
   "redeemed.suggestions": "ou vous pouvez choisir l'un des fantastiques collectifs listés ci-dessous :",
   "Remove": "Supprimer",
+  "renderNone": "None",
   "Reset": "Réinitialiser",
   "response.status.interested": "{name} est intéressé",
   "response.status.yes": "{name} est confirmé",
