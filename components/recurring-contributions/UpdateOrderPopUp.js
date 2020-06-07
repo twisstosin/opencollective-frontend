@@ -45,6 +45,14 @@ const messages = defineMessages({
   },
 });
 
+const updateOrderMutation = gqlV2/* GraphQL */ `
+  mutation updateOrderTierOrAmount($order: OrderReferenceInput!, $amount: Int, $tier: TierReferenceInput) {
+    updateOrder(order: $order, amount: $amount, tier: $tier) {
+      id
+    }
+  }
+`;
+
 const getTiersQuery = gql`
   query UpdateOrderPopUpQuery($collectiveSlug: String!) {
     Collective(slug: $collectiveSlug) {
@@ -75,8 +83,6 @@ const getTiersQuery = gql`
 const UpdateOrderPopUp = ({ setMenuState, contribution, createNotification, setShowPopup, router }) => {
   const intl = useIntl();
 
-  // console.log(contribution);
-
   // state management
   const [loadingDefaultTier, setLoadingDefaultTier] = useState(true);
   const [selectedTier, setSelectedTier] = useState(null);
@@ -85,6 +91,9 @@ const UpdateOrderPopUp = ({ setMenuState, contribution, createNotification, setS
   const [inputAmountValue, setInputAmountValue] = useState(100);
 
   // GraphQL mutations and queries
+  const [submitUpdateOrder, { loading: loadingUpdateOrder }] = useMutation(updateOrderMutation, {
+    context: API_V2_CONTEXT,
+  });
   const { data } = useQuery(getTiersQuery, {
     variables: {
       collectiveSlug: contribution.toAccount.slug,
@@ -111,10 +120,11 @@ const UpdateOrderPopUp = ({ setMenuState, contribution, createNotification, setS
       title: 'free tier',
       flexible: true,
       amount: 100,
-      id: 'free-tier',
+      id: null,
       currency: contribution.amount.currency,
-      interval: 'month',
+      interval: contribution.frequency.toLowerCase().slice(0, -2),
       presets: [500, 1000, 2000, 5000],
+      minimumAmount: 100,
     };
     const tierOptions = tiers
       .filter(tier => tier.interval !== null)
@@ -127,6 +137,7 @@ const UpdateOrderPopUp = ({ setMenuState, contribution, createNotification, setS
         currency: tier.currency,
         interval: tier.interval,
         presets: tier.presets,
+        minimumAmount: tier.amountType === 'FLEXIBLE' ? tier.minimumAmount : 100,
       }));
     tierOptions.unshift(freeTierOption);
     return tierOptions;
@@ -185,7 +196,7 @@ const UpdateOrderPopUp = ({ setMenuState, contribution, createNotification, setS
           defaultValue={selectedTier?.key}
           value={selectedTier}
         >
-          {({ radio, checked, value: { title, subtitle, amount, flexible, currency, interval } }) => (
+          {({ radio, checked, value: { title, subtitle, amount, flexible, currency, interval, minimumAmount } }) => (
             <TierBox minheight={50} p={2} bg="white.full">
               <Flex alignItems="center">
                 <Box as="span" mr={3} flexWrap="wrap">
@@ -195,7 +206,7 @@ const UpdateOrderPopUp = ({ setMenuState, contribution, createNotification, setS
                   <P fontWeight={subtitle ? 600 : 400} color="black.900">
                     {startCase(title)}
                   </P>
-                  {checked ? (
+                  {checked && flexible ? (
                     <Fragment>
                       <StyledSelect
                         menuPortalTarget={document.body}
@@ -226,7 +237,7 @@ const UpdateOrderPopUp = ({ setMenuState, contribution, createNotification, setS
                               defaultMessage="Min. amount: {minAmount}"
                               id="RecurringContributions.minAmount"
                               values={{
-                                minAmount: formatCurrency(100, currency),
+                                minAmount: formatCurrency(minimumAmount, currency),
                               }}
                             />
                           </P>
@@ -269,20 +280,31 @@ const UpdateOrderPopUp = ({ setMenuState, contribution, createNotification, setS
           ml={2}
           buttonSize="tiny"
           buttonStyle="secondary"
-          // loading={}
-          // disabled={}
-          onClick={() => {
-            const orderUpdateInfo = {
-              tier: selectedTier.value ? selectedTier.value.title : selectedTier.title,
-              amount: selectedAmountOption.label === 'Other' ? inputAmountValue : selectedAmountOption.value,
-            };
+          loading={loadingUpdateOrder}
+          onClick={async () => {
             try {
-              console.log(orderUpdateInfo);
+              await submitUpdateOrder({
+                variables: {
+                  order: { id: contribution.id },
+                  amount: selectedAmountOption.label === 'Other' ? inputAmountValue : selectedAmountOption.value,
+                  tier: {
+                    legacyId: selectedTier.value ? selectedTier.value.id : selectedTier.id,
+                    flexible: selectedTier.flexible,
+                    minimumAmount: selectedTier.minimumAmount,
+                  },
+                },
+                refetchQueries: [
+                  {
+                    query: getTiersQuery,
+                    variables: { collectiveSlug: router.query.collectiveSlug },
+                  },
+                ],
+              });
               createNotification('update');
-              // setShowPopup(false);
+              setShowPopup(false);
             } catch (error) {
-              // const errorMsg = getErrorFromGraphqlException(error).message;
-              // createNotification('error', errorMsg);
+              const errorMsg = getErrorFromGraphqlException(error).message;
+              createNotification('error', errorMsg);
             }
           }}
         >

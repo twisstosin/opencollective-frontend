@@ -122,22 +122,24 @@ const RecurringContributionsPopUp = ({ contribution, status, createNotification,
   });
 
   // detect click outside menu to close it - https://medium.com/@pitipatdop/little-neat-trick-to-capture-click-outside-with-react-hook-ba77c37c7e82
-  // const popupNode = useRef();
-  // const handleClick = e => {
-  //   if (popupNode.current.contains(e.target)) {
-  //     // inside click
-  //     return;
-  //   }
-  //   // outside click
-  //   setShowPopup(false);
-  // };
-  // useEffect(() => {
-  //   document.addEventListener('mousedown', handleClick);
+  const popupNode = useRef(null);
+  const handleClick = e => {
+    // we include 'react-select' because the dropdown in UpdateOrderPopUp portals to the
+    // document.body, so if we don't inlude this it closes the menu
+    if (popupNode.current.contains(e.target) || e.target.id.includes('react-select')) {
+      // inside click
+      return;
+    }
+    // outside click
+    setShowPopup(false);
+  };
+  useEffect(() => {
+    document.addEventListener('mousedown', handleClick);
 
-  //   return () => {
-  //     document.removeEventListener('mousedown', handleClick);
-  //   };
-  // }, []);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+    };
+  }, []);
 
   const { formatMessage } = useIntl();
   const mainMenu = menuState === 'mainMenu' && status === 'ACTIVE';
@@ -147,7 +149,7 @@ const RecurringContributionsPopUp = ({ contribution, status, createNotification,
   const activateMenu = menuState === 'mainMenu' && status === 'CANCELLED';
 
   return (
-    <PopUpMenu minHeight={160} maxHeight={360} width={'100%'} overflowY={'auto'}>
+    <PopUpMenu minHeight={160} maxHeight={360} width={'100%'} overflowY={'auto'} ref={popupNode}>
       {mainMenu && (
         <MenuSection>
           <Flex flexGrow={1 / 4} width={1} alignItems="center" justifyContent="center">
