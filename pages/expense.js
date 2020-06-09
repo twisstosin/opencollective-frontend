@@ -5,6 +5,7 @@ import { cloneDeep, debounce, get, sortBy, uniqBy, update } from 'lodash';
 import memoizeOne from 'memoize-one';
 import { defineMessages, FormattedMessage, injectIntl } from 'react-intl';
 
+import expenseTypes from '../lib/constants/expenseTypes';
 import { formatErrorMessage, generateNotFoundError, getErrorFromGraphqlException } from '../lib/errors';
 import { API_V2_CONTEXT, gqlV2 } from '../lib/graphql/helpers';
 import { Router } from '../server/pages';
@@ -199,8 +200,16 @@ class ExpensePage extends React.Component {
   onSummarySubmit = async () => {
     try {
       this.setState({ isSubmitting: true, error: null });
+      const { expense } = this.props.data;
       const { editedExpense } = this.state;
-      await this.props.mutate({ variables: { expense: prepareExpenseForSubmit(editedExpense) } });
+      const preparedExpense = prepareExpenseForSubmit(editedExpense);
+
+      // When switching from RECEIPT to INVOICE, make sure we remove the files attached to items
+      if (expense.type === expenseTypes.RECEIPT && editedExpense.type === expenseTypes.INVOICE) {
+        preparedExpense.items = preparedExpense.items.map(item => ({ ...item, url: null }));
+      }
+
+      await this.props.mutate({ variables: { expense: preparedExpense } });
       this.setState({ status: PAGE_STATUS.VIEW, isSubmitting: false, editedExpense: undefined, error: null });
     } catch (e) {
       this.setState({ error: getErrorFromGraphqlException(e), isSubmitting: false });
