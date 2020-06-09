@@ -73,40 +73,6 @@ const CollectiveCategoryPicker = () => {
                 </P>
               </Flex>
             </Container>
-            <Container
-              borderLeft={['none', '1px solid #E6E8EB']}
-              borderTop={['1px solid #E6E8EB', 'none']}
-              alignItems="center"
-              width={[null, 280, 312]}
-            >
-              <Flex flexDirection="column" justifyContent="center" alignItems="center">
-                <Image
-                  src="/static/images/create-collective/communityIllustration.png"
-                  alt={formatMessage(messages.fund)}
-                />
-                <Link
-                  route="create-fund"
-                  params={{
-                    hostCollectiveSlug: router.query.hostCollectiveSlug,
-                    verb: router.query.verb,
-                    category: 'fund',
-                  }}
-                >
-                  <StyledButton
-                    fontSize="13px"
-                    buttonStyle="primary"
-                    minHeight="36px"
-                    mt={[2, 3]}
-                    mb={3}
-                    px={3}
-                    data-cy="ccf-category-picker-button-community"
-                  >
-                    {formatMessage(messages.fund)}
-                  </StyledButton>
-                </Link>
-                <P>You will pick a Fiscal Host later.</P>
-              </Flex>
-            </Container>
           </Flex>
         </Box>
       </Flex>

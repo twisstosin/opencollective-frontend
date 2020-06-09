@@ -146,7 +146,8 @@ class CreateCollectiveForm extends React.Component {
             <P fontSize="LeadParagraph" color="black.600" mb={2}>
               <FormattedMessage
                 id="createFund.subtitle.introduce"
-                defaultMessage="Introduce your Fund to the community."
+                defaultMessage="Apply for Fiscal Sponsorship below. We will review your
+                  application shortly. FAQs here."
               />
             </P>
           </Box>
@@ -277,8 +278,8 @@ class CreateCollectiveForm extends React.Component {
                           name="hostTos"
                           label={
                             <FormattedMessage
-                              id="createcollective.hosttos.label"
-                              defaultMessage="I agree with the the {hosttoslink} of the host that will collect money on behalf of our collective."
+                              id="createFund.hosttos.label"
+                              defaultMessage="I agree with the {hosttoslink} of the Open Collective Foundation."
                               values={{
                                 hosttoslink: (
                                   <StyledLink href={host.termsUrl} openInNewTab>
